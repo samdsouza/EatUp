@@ -49,17 +49,15 @@ def main():
 
                 if command == "Login":
                     print("Enter Customer ID:")
-                    command = input()
+                    customerID = input()
                     login_success = 0
-                    login_success, customerFirstName, customerLastName = loginCustomer(command)
+                    login_success, customerFirstName, customerLastName = loginCustomer(customerID)
                     while login_success != 1:
                         print("Customer ID not found in database, Please try again")
-                        command = input()
-                        login_success, customerFirstName, customerLastName = loginCustomer(command)
+                        customerID = input()
+                        login_success, customerFirstName, customerLastName = loginCustomer(customerID)
                     print('Welcome Back' , customerFirstName.strip(), customerLastName.strip(), "!")
-                    #print('Before Customer Rewards Call')
-                    customerRewardsMenu(customerFirstName.strip(),customerLastName.strip())
-                    #print('After Customer Rewards Call')
+                    customerRewardsMenu(customerID, customerFirstName.strip(),customerLastName.strip())
 
         else:
             print("Invaild Command")
@@ -129,20 +127,38 @@ def searchRestaurant(workbook,searchRestaurant):
             print('Did Not Find Resteraunt')
 
 def determineRewards(workbook,searchRestaurant):
+    #print('made it into rewards function')
+    #print('search resteraunt = ', searchRestaurant)
     sheet = workbook.sheet_by_index(0)
     sheet.cell_value(0,0)
     lengthSheet = sheet.nrows
 
     for i in range(4,lengthSheet):
         currentRestaurant = sheet.cell_value(i,1)
-        if(searchRestaurant == currentRestaurant):
+        #print('Current resteraunt = ', currentRestaurant)
+        if(searchRestaurant.strip() == currentRestaurant.strip()):
             totalRewards =  sheet.cell_value(i,3)
             return totalRewards
+
+
+def listResteraunts(workbook, printFlag):
+    sheet = workbook.sheet_by_index(0)
+    sheet.cell_value(0,0)
+    lengthSheet = sheet.nrows
+    resterauntList = []
+
+    for i in range(4,lengthSheet):
+        currentRestaurant = sheet.cell_value(i,1)
+        resterauntList.append(currentRestaurant)
+        if printFlag == True:
+            print(currentRestaurant)
+    return resterauntList
+
 
 def addNewVisit(fileDestination,restaurantName,date,totalSpent):
     # Before adding total spent, need to lookup resteraunt reward policy in resteraunt index
     # Determine the rewards earned and input into the individual resteraunt and customer excell sheet
-    wb = load_workbook(filename = dest)
+    wb = load_workbook(filename = fileDestination)
     worksheet = wb["Sheet1"]
 
 
@@ -156,7 +172,7 @@ def addNewVisit(fileDestination,restaurantName,date,totalSpent):
     dateCell.value = date + "'"
     restaurantCell.value = restaurantName
     spentCell.value = totalSpent
-    wb.save(dest)
+    wb.save(fileDestination)
 
 
 
@@ -200,23 +216,23 @@ def customerMenu():
     return
 
 #Main customer functionality
-def customerRewardsMenu(customerFirstName, customerLastName):
+def customerRewardsMenu(customerID, customerFirstName, customerLastName):
     #print('Made it in customer Rewards ')
     inp = "start"
     while inp != "back":
         print("\n")
-        print("____________________ ", customerFirstName, customerLastName,"'s", "Rewards_________________")
-        print("1. Rewards progress")
-        print("2. Input rewards")
-        print("3. Redeem rewards")
+        print("____________________ ", customerFirstName, customerLastName.strip(),"'s", "Rewards_________________")
+        print("1. Rewards Progress")
+        print("2. Input Rewards")
+        print("3. Redeem Rewards")
 
         inp = input()
-
-        if inp == "Rewards progress":
-            rewardsProgress()
-        if inp == "inputRewards":
-            inputRewards()
-        if inp == "redeemRewards":
+        inp.strip()
+        if inp == "Rewards Progress":
+            rewardsProgress(customerID)
+        if inp == "Input Rewards":
+            inputRewards(customerID)
+        if inp == "Redeem Rewards":
             redeemRewards()
     return
 
@@ -248,13 +264,55 @@ def loginCustomer(command):
 
 
 #placeholder
-def rewardsProgress():
+def rewardsProgress(customerID):
+    filename = 'customer' + customerID + '.xlsx'
+    fileLocationOutput = fileLocation(filename)
+    customerWorkbook = openWorkbook(fileLocationOutput)
 
+    print("\n")
+    print('Favorite Resteraunts')
+    resterauntList = listResteraunts(customerWorkbook, True)
+
+
+    print("\n")
+    print('Enter Resteraunt Name')
+    resterauntName = input()
+
+    resterauntRewards = determineRewards(customerWorkbook,resterauntName)
+
+    print('Total Rewards for ', resterauntName, 'is ', str(int(resterauntRewards)))
 
     return
 
 #placeholder
-def inputRewards():
+def inputRewards(customerID):
+
+    filename = 'customer' + customerID + '.xlsx'
+    fileLocationOutput = fileLocation(filename)
+    customerWorkbook = openWorkbook(fileLocationOutput)
+
+    print("\n")
+
+    print("Enter Resteraunt Name")
+    resterauntName = input()
+    resterauntName.strip()
+
+    print("Ente Date of Purchase")
+    date = input()
+    date.strip()
+
+    print("Enter Total Cost Spent")
+    totalCost = input()
+    totalCost.strip()
+
+    resterauntListing = listResteraunts(customerWorkbook, False)
+
+    if resterauntName in resterauntListing:
+        print(this)
+    else:
+        addNewVisit(filename,resterauntName,date,totalCost)
+
+
     return
 
 #placeholder
