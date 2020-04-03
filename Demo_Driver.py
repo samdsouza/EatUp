@@ -149,7 +149,7 @@ def listResteraunts(workbook, printFlag):
 
     for i in range(4,lengthSheet):
         currentRestaurant = sheet.cell_value(i,1)
-        resterauntList.append(currentRestaurant)
+        resterauntList.append(currentRestaurant.strip())
         if printFlag == True:
             print(currentRestaurant)
     return resterauntList
@@ -169,12 +169,37 @@ def addNewVisit(fileDestination,restaurantName,date,totalSpent):
     rewardsEarnedCell = worksheet.cell(row = currentRow, column = 4)
     rewardsClaimedCell = worksheet.cell(row = currentRow, column = 5)
 
+    rewardsEarnedCell.value = 1
     dateCell.value = date + "'"
     restaurantCell.value = restaurantName
     spentCell.value = totalSpent
     wb.save(fileDestination)
 
 
+def determineResterauntIndex(workbook, searchRestaurant):
+    print("In resteraunt Index")
+    sheet = workbook.sheet_by_index(0)
+    sheet.cell_value(0,0)
+    lengthSheet = sheet.nrows
+    #print("Sheet Length = ", lengthSheet)
+
+    for i in range(4,lengthSheet):
+        currentRestaurant = sheet.cell_value(i,1)
+        #print("currentResteraunt = ",currentRestaurant )
+        if(str(searchRestaurant.strip()) == str(currentRestaurant.strip())):
+            totalCost = sheet.cell_value(i,2)
+            #print("Total Cost = ", totalCost)
+            return i, totalCost
+
+
+def updateVisit(fileDestination,restaurantName,date,totalSpent,resterauntIndex, currentCost):
+
+    wb = load_workbook(filename = fileDestination)
+    worksheet = wb["Sheet1"]
+
+    spentCell = worksheet.cell(row = resterauntIndex + 1, column = 3)
+    spentCell.value = currentCost + float(totalSpent)
+    wb.save(fileDestination)
 
 
 
@@ -224,7 +249,6 @@ def customerRewardsMenu(customerID, customerFirstName, customerLastName):
         print("____________________ ", customerFirstName, customerLastName.strip(),"'s", "Rewards_________________")
         print("1. Rewards Progress")
         print("2. Input Rewards")
-        print("3. Redeem Rewards")
 
         inp = input()
         inp.strip()
@@ -307,9 +331,17 @@ def inputRewards(customerID):
 
     resterauntListing = listResteraunts(customerWorkbook, False)
 
+    #print(resterauntListing)
+
+
+
     if resterauntName in resterauntListing:
-        print(this)
+        print('In current Resteraunt')
+        resterauntIndex, currentCost = determineResterauntIndex(customerWorkbook,resterauntName)
+        updateVisit(filename,resterauntName,date,totalCost,resterauntIndex, currentCost)
+        #print(this)
     else:
+        print("New Resteraunt")
         addNewVisit(filename,resterauntName,date,totalCost)
 
 
