@@ -24,8 +24,8 @@ def main():
         command.strip()
         print("Command = ", command)
         if command == "Buisness":
-            buisnessMenu()
             while command != "back":
+                buisnessMenu()
                 command = input()
                 if command == "Setup":
                     setupBuisness()
@@ -33,12 +33,12 @@ def main():
                     print("Enter Buisness ID:")
                     command = input()
                     login_success = 0
-                    login_success = loginBuisness()
-                    while login_success != 1 or command != "back":
-                        print("Enter Buisness ID:")
+                    login_success, buisnessName = loginBuisness(command)
+                    while login_success != 1:
+                        print("Buisness ID not found in database, Please try again\n")
                         command = input()
-                        login_success = loginBuisness()
-                    manageMenu()
+                        login_success, buisnessName = loginBuisness(command)
+                    manageMenu(buisnessName)
 
         elif command == "Customer":
             while command != "back":
@@ -58,6 +58,9 @@ def main():
                         login_success, customerFirstName, customerLastName = loginCustomer(customerID)
                     print('Welcome Back' , customerFirstName.strip(), customerLastName.strip(), "!")
                     customerRewardsMenu(customerID, customerFirstName.strip(),customerLastName.strip())
+
+        elif command == "exit":
+            return
 
         else:
             print("Invaild Command")
@@ -213,15 +216,14 @@ def buisnessMenu():
     return
 
 #manageMenu handling
-def manageMenu():
+def manageMenu(buisnessName):
     inp = "init"
     while inp != "back":
-        inp = input()
-        print("____________________  Manage Menu _____________________\n")
+        print("____________________ ", buisnessName, " _____________________\n")
         print("1. Add rewards")
         print("2. Remove rewards")
         print("3. View rewards")
-        print("4. Edit rewards\n")
+        inp = input()
 
         if inp == "Add rewards":
             addRewards()
@@ -229,8 +231,6 @@ def manageMenu():
             removeRewards()
         if inp == "View rewards":
             displayRewards()
-        if inp == "Edit rewards":
-            editRewards()
     return
 
 #customer menu function
@@ -375,8 +375,27 @@ def setupBuisness():
     return
 
 #placeholder for buisness login
-def loginBuisness():
-    return 1
+def loginBuisness(command):
+    signal = 1
+    filename = 'restaurantIndex.xlsx'
+    fileLocationOutput = fileLocation(filename)
+    buisnessIndexBook = openWorkbook(fileLocationOutput)
+    sheet = buisnessIndexBook.sheet_by_index(0)
+    sheet.cell_value(0,0)
+    lengthSheet = sheet.nrows
+    #print('Length of Sheet =' , lengthSheet)
+
+    for i in range(2,lengthSheet):
+        #('Starting Loop')
+        currentID = sheet.cell_value(i,0)
+        #print('Current ID = ', currentID)
+        if(command == str(int(currentID))):
+            buisnessName =  sheet.cell_value(i,1)
+            return signal, buisnessName
+
+    signal = 0
+    buisnessName = 'NA'
+    return signal, buisnessName
 
 if __name__ == "__main__":
     main()
