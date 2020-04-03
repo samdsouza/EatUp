@@ -1,3 +1,12 @@
+import xlsxwriter
+from openpyxl import load_workbook
+import pandas
+
+import xlrd
+
+
+
+
 def main():
     #Framework for demo functionality including all menu options
     #display upon entry and entry only:
@@ -12,6 +21,8 @@ def main():
         print("2. Customer\n")
 
         command = input()
+        command.strip()
+        print("Command = ", command)
         if command == "Buisness":
             buisnessMenu()
             while command != "back":
@@ -29,7 +40,7 @@ def main():
                         login_success = loginBuisness()
                     manageMenu()
 
-        if command == "Customer":
+        elif command == "Customer":
             while command != "back":
                 customerMenu()
                 command = input()
@@ -40,14 +51,116 @@ def main():
                     print("Enter Customer ID:")
                     command = input()
                     login_success = 0
-                    login_success = loginCustomer()
-                    while login_success != 1 or command != "back":
-                        print("Enter Customer ID:")
+                    login_success, customerFirstName, customerLastName = loginCustomer(command)
+                    while login_success != 1:
+                        print("Customer ID not found in database, Please try again")
                         command = input()
-                        login_success = loginCustomer()
-                    customerRewardsMenu()
+                        login_success, customerFirstName, customerLastName = loginCustomer(command)
+                    print('Welcome Back' , customerFirstName.strip(), customerLastName.strip(), "!")
+                    #print('Before Customer Rewards Call')
+                    customerRewardsMenu(customerFirstName.strip(),customerLastName.strip())
+                    #print('After Customer Rewards Call')
+
+        else:
+            print("Invaild Command")
 
     return
+
+
+
+
+
+
+
+
+
+
+
+def fileLocation(fileName):
+    baseDirectory = "/Users/samdsouza/Documents/EatUp/EatUp"
+    fileLocation = baseDirectory + "/" + fileName
+    return fileLocation
+
+def openWorkbook(fileLocation):
+    wb = xlrd.open_workbook(fileLocation)
+    return wb
+
+
+def returnCustomerID(workbook):
+    sheet = workbook.sheet_by_index(0)
+    sheet.cell_value(0,0)
+    return sheet.cell_value(0,1)
+
+def returnCustomerName(workbook):
+    sheet = workbook.sheet_by_index(0)
+    sheet.cell_value(0,0)
+    return sheet.cell_value(1,1)
+
+def extractInfo(workbook):
+    sheet = workbook.sheet_by_index(0)
+    sheet.cell_value(0,0)
+    lengthSheet = sheet.nrows
+
+    dates = []
+    restaurants = []
+    prices = []
+    rewards = []
+
+    for i in range(4,lengthSheet):
+        #print(sheet.cell_value(i,0))
+        dates.append(sheet.cell_value(i,0))
+        restaurants.append(sheet.cell_value(i,1))
+        prices.append(sheet.cell_value(i,2))
+        rewards.append(sheet.cell_value(i,3))
+
+    return dates, restaurants, prices, rewards
+
+
+def searchRestaurant(workbook,searchRestaurant):
+    sheet = workbook.sheet_by_index(0)
+    sheet.cell_value(0,0)
+    lengthSheet = sheet.nrows
+
+    for i in range(4,lengthSheet):
+        currentRestaurant = sheet.cell_value(i,1)
+        if(searchRestaurant == currentRestaurant):
+            return currentRestaurant
+        else:
+            print('Did Not Find Resteraunt')
+
+def determineRewards(workbook,searchRestaurant):
+    sheet = workbook.sheet_by_index(0)
+    sheet.cell_value(0,0)
+    lengthSheet = sheet.nrows
+
+    for i in range(4,lengthSheet):
+        currentRestaurant = sheet.cell_value(i,1)
+        if(searchRestaurant == currentRestaurant):
+            totalRewards =  sheet.cell_value(i,3)
+            return totalRewards
+
+def addNewVisit(fileDestination,restaurantName,date,totalSpent):
+    # Before adding total spent, need to lookup resteraunt reward policy in resteraunt index
+    # Determine the rewards earned and input into the individual resteraunt and customer excell sheet
+    wb = load_workbook(filename = dest)
+    worksheet = wb["Sheet1"]
+
+
+    currentRow = worksheet.max_row
+    dateCell = worksheet.cell(row = currentRow, column = 1)
+    restaurantCell = worksheet.cell(row = currentRow, column = 2)
+    spentCell = worksheet.cell(row = currentRow, column = 3)
+    rewardsEarnedCell = worksheet.cell(row = currentRow, column = 4)
+    rewardsClaimedCell = worksheet.cell(row = currentRow, column = 5)
+
+    dateCell.value = date + "'"
+    restaurantCell.value = restaurantName
+    spentCell.value = totalSpent
+    wb.save(dest)
+
+
+
+
 
 
 
@@ -87,14 +200,17 @@ def customerMenu():
     return
 
 #Main customer functionality
-def customerRewardsMenu():
+def customerRewardsMenu(customerFirstName, customerLastName):
+    #print('Made it in customer Rewards ')
     inp = "start"
     while inp != "back":
-        inp = input()
-        print("____________________  Customer Menu _____________________\n")
+        print("\n")
+        print("____________________ ", customerFirstName, customerLastName,"'s", "Rewards_________________")
         print("1. Rewards progress")
         print("2. Input rewards")
         print("3. Redeem rewards")
+
+        inp = input()
 
         if inp == "Rewards progress":
             rewardsProgress()
@@ -105,7 +221,36 @@ def customerRewardsMenu():
     return
 
 #placeholder
+def loginCustomer(command):
+    signal = 1
+    filename = 'customerIndex.xlsx'
+    fileLocationOutput = fileLocation(filename)
+    customerIndexBook = openWorkbook(fileLocationOutput)
+    sheet = customerIndexBook.sheet_by_index(0)
+    sheet.cell_value(0,0)
+    lengthSheet = sheet.nrows
+    #print('Length of Sheet =' , lengthSheet)
+
+    for i in range(2,lengthSheet):
+        #('Starting Loop')
+        currentID = sheet.cell_value(i,0)
+        #print('Current ID = ', currentID)
+        if(command == str(int(currentID))):
+            customerFirstName =  sheet.cell_value(i,1)
+            customerLastName = sheet.cell_value(i,2)
+            return signal, customerFirstName, customerLastName
+
+    signal = 0
+    customerFirstName = 'NA'
+    customerLastName = 'NA'
+    return signal, customerFirstName, customerLastName
+
+
+
+#placeholder
 def rewardsProgress():
+
+
     return
 
 #placeholder
@@ -115,10 +260,6 @@ def inputRewards():
 #placeholder
 def redeemRewards():
     return
-
-#placeholder
-def loginCustomer():
-    return 1
 
 #placeholder
 def addRewards():
